@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="rslidar_sdk" name="rslidar_sdk_node" type="rslidar_sdk_node" output="screen">
+  </node>
+  <!-- rslidar detection -->
+  <node pkg="lidar_detection" name="lidarDetectionOnline" type="lidarDetectionOnline" output="screen"/>
+</launch>

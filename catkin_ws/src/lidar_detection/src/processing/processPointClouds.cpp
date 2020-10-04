@@ -109,6 +109,29 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::bkgRemove(
 
 
 template<typename PointT>
+typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::dustRemove(
+        const typename pcl::PointCloud<PointT>::Ptr& inputCloud,
+        float distanceThreshold, float intensityThreshold)
+{
+    typename pcl::PointCloud<PointT>::Ptr foreground(new pcl::PointCloud<PointT>);
+
+    auto startTime = std::chrono::steady_clock::now();
+
+    for (const auto & searchPoint : inputCloud->points) {
+        if (searchPoint.data[3] >= intensityThreshold || abs(searchPoint.data[2]) >= distanceThreshold){
+                foreground->points.push_back(searchPoint);
+        }
+    }
+
+    auto endTime = std::chrono::steady_clock::now();
+    auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    std::cout << "removing dust took " << elapsedTime.count() << " milliseconds" << std::endl;
+
+    return foreground;
+}
+
+
+template<typename PointT>
 std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::DBSCANCluster(
         const typename pcl::PointCloud<PointT>::Ptr cloud,
         int core_point_min_pts, float tolerance, int min_size, int max_size)

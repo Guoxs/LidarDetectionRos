@@ -48,6 +48,10 @@ public:
             const typename pcl::PointCloud<PointT>::Ptr& filteredCloudBGK,
             double radius, int minNum);
 
+    typename pcl::PointCloud<PointT>::Ptr dustRemove(
+            const typename pcl::PointCloud<PointT>::Ptr& inputCloud,
+            float distanceThreshold, float intensityThreshold);
+
     std::vector<typename pcl::PointCloud<PointT>::Ptr> DBSCANCluster(
             typename pcl::PointCloud<PointT>::Ptr cloud,
             int core_point_min_pts, float tolerance, int min_size, int max_size);

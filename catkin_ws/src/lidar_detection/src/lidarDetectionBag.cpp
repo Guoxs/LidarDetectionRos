@@ -157,7 +157,7 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
     // renderPointCloud(viewer, foregroundCloud, "foregroundCloud",Color(1,0,0));
 
     // remove dust
-    foregroundCloud = pointProcessor->dustRemove(foregroundCloud, 10.0, 1.5);
+    foregroundCloud = pointProcessor->dustRemove(foregroundCloud, 15.0, 500.0);
 
     if (foregroundCloud->points.empty()){
         return;

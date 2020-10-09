@@ -1,25 +1,17 @@
 //
 // Created by guoxs on 2020/9/23.
 //
-#include "IO/lidarIO.h"
 #include "IO/lidarIO.cpp"
 #include "render/render.h"
+#include "global.h"
 #include "processing/processPointClouds.h"
 #include "processing/processPointClouds.cpp"
 
 #include <ros/ros.h>
-#include <rosbag/bag.h>
-#include <rosbag/view.h>
 #include <std_msgs/Int32.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-
-//set point cloud range
-const Eigen::Vector4f minPoint(0, -55, -5, 1);
-const Eigen::Vector4f maxPoint( 100, 100, 15, 1);
-//background frame number
-int backgroundNum = 50;
 
 void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     ProcessPointClouds<pcl::PointXYZI>* PointProcessor,
@@ -72,17 +64,6 @@ void callBack(sensor_msgs::PointCloud2::ConstPtr data,
     }
 }
 
-void callBack2(sensor_msgs::PointCloud2::ConstPtr data,
-              pcl::visualization::PCLVisualizer::Ptr& viewer)
-{
-    pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud(new pcl::PointCloud<pcl::PointXYZI>);
-    pcl::fromROSMsg(*data,*inputCloud);
-    viewer->removeAllPointClouds();
-    viewer->removeAllShapes();
-    renderPointCloud(viewer, inputCloud, "inputCloud", Color(1,1,1));
-    viewer->spinOnce ();
-}
-
 int main (int argc, char** argv)
 {
     ros::init (argc, argv, "lidar_detection_online");
@@ -99,8 +80,6 @@ int main (int argc, char** argv)
     ros::Subscriber subscriber = n.subscribe<sensor_msgs::PointCloud2>(topicName, 5,
             boost::bind(&callBack, _1, viewer, pointProcessor, backgroundCloud));
 
-//    ros::Subscriber subscriber = n.subscribe<sensor_msgs::PointCloud2>(
-//            topicName, 5, boost::bind(&callBack, _1, viewer));
     ros::spin();
     return 0;
 }

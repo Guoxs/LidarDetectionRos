@@ -4,17 +4,11 @@
 #include "IO/lidarIO.h"
 #include "IO/lidarIO.cpp"
 #include "render/render.h"
+#include "global.h"
 #include "processing/processPointClouds.h"
 #include "processing/processPointClouds.cpp"
 
 #include <ros/ros.h>
-
-//set point cloud range
-const Eigen::Vector4f minPoint(0, -55, -5, 1);
-const Eigen::Vector4f maxPoint( 100, 100, 15, 1);
-//whether recreate background file
-bool recordBackground = false;
-
 
 void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     ProcessPointClouds<pcl::PointXYZI>* PointProcessor,

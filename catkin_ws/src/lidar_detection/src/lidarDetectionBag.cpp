@@ -1,12 +1,6 @@
 //
 // Created by guoxs on 2020/9/23.
 //
-#include "IO/lidarIO.h"
-#include "IO/lidarIO.cpp"
-#include "render/render.h"
-#include "processing/processPointClouds.h"
-#include "processing/processPointClouds.cpp"
-
 #include <ros/ros.h>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
@@ -14,21 +8,21 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-
-//set point cloud range
-const Eigen::Vector4f minPoint(0, -55, -5, 1);
-const Eigen::Vector4f maxPoint( 100, 100, 15, 1);
-//whether recreate background file
-bool recordBackground = false;
+#include "IO/lidarIO.h"
+#include "IO/lidarIO.cpp"
+#include "render/render.h"
+#include "msg_util.cpp"
+#include "processing/processPointClouds.h"
+#include "processing/processPointClouds.cpp"
 
 
 void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     ProcessPointClouds<pcl::PointXYZI>* PointProcessor,
                     const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputCloud,
-                    const pcl::PointCloud<pcl::PointXYZI>::Ptr& filteredBgCloud);
+                    const pcl::PointCloud<pcl::PointXYZI>::Ptr& filteredBgCloud,
+                    waytous_perception_msgs::ObjectArray lidar_detection_info);
 
 void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& viewer);
-
 
 int main (int argc, char** argv)
 {
@@ -54,6 +48,12 @@ int main (int argc, char** argv)
         std::cout << "### Using '-r' for background recording ###" << std::endl;
     }
 
+    //define object publisher
+    ros::Publisher objects_info_pub = nh.advertise<waytous_perception_msgs::ObjectArray>("/objects_info", 5);
+    waytous_perception_msgs::ObjectArray lidar_detection_info;
+    // type: normal
+    initPublisher(lidar_detection_info, 0);
+
     //indices for nan removing
     std::vector<int> indices;
     //Stream PCD
@@ -69,7 +69,6 @@ int main (int argc, char** argv)
         pcl::PointCloud<pcl::PointXYZI>::Ptr tempCloud(new pcl::PointCloud<pcl::PointXYZI>);
 
         std::string backgroundDataPath = rootPath + "background";
-        int backgroundNum = 50;
         while ((backgroundNum > 0) & (it != view.end())){
             sensor_msgs::PointCloud2::ConstPtr input = (*it).instantiate<sensor_msgs::PointCloud2>();
             if (input != nullptr)
@@ -104,7 +103,6 @@ int main (int argc, char** argv)
 
     //show video results
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud(new pcl::PointCloud<pcl::PointXYZI>);
-
     while (!viewer->wasStopped ()){
         // Clear viewer
         viewer->removeAllPointClouds();
@@ -119,13 +117,16 @@ int main (int argc, char** argv)
             renderPointCloud(viewer,inputCloud,"inputCloud", Color(1,1,1));
 
             //performing detection
-            lidarDetection(viewer, pointProcessor, inputCloud, filteredBgCloud);
+            lidarDetection(viewer, pointProcessor, inputCloud, filteredBgCloud, lidar_detection_info);
         }
 
-        it++;
-        if(it == view.end())
-            it = view.begin();
+        // publish message
+        objects_info_pub.publish(lidar_detection_info);
 
+        it++;
+        if(it == view.end()){
+            it = view.begin();
+        }
         viewer->spinOnce ();
     }
 
@@ -138,7 +139,8 @@ int main (int argc, char** argv)
 void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     ProcessPointClouds<pcl::PointXYZI>* pointProcessor,
                     const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputCloud,
-                    const pcl::PointCloud<pcl::PointXYZI>::Ptr& filteredBgCloud)
+                    const pcl::PointCloud<pcl::PointXYZI>::Ptr& filteredBgCloud,
+                    waytous_perception_msgs::ObjectArray lidar_detection_info)
 {
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredInputCloud(new pcl::PointCloud<pcl::PointXYZI>);
     // box filter
@@ -198,6 +200,11 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
         BoxQ box = pointProcessor->minBoxQ(cluster);
         renderBox(viewer, box, clusterId);
         ++clusterId;
+
+        //publish object info
+        waytous_perception_msgs::Object object_info;
+        generateObjectInfo(object_info, clusterId, cluster, box);
+        lidar_detection_info.foreground_objects.push_back(object_info);
     }
 }
 

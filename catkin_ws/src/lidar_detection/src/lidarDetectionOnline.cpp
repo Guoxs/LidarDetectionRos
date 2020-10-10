@@ -1,17 +1,17 @@
 //
 // Created by guoxs on 2020/9/23.
 //
+#include <ros/ros.h>
+#include <std_msgs/Int32.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <pcl_conversions/pcl_conversions.h>
+
 #include "global.h"
 #include "msg_util.cpp"
 #include "IO/lidarIO.cpp"
 #include "render/render.h"
 #include "processing/processPointClouds.h"
 #include "processing/processPointClouds.cpp"
-
-#include <ros/ros.h>
-#include <std_msgs/Int32.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <pcl_conversions/pcl_conversions.h>
 
 
 void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,

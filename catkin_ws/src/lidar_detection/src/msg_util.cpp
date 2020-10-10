@@ -3,8 +3,6 @@
 //
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Pose.h>
-#include <geometry_msgs/Vector3.h>
-#include <geometry_msgs/Polygon.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 #include "render/box.h"
@@ -24,7 +22,7 @@ void static initPublisher(waytous_perception_msgs::ObjectArray lidar_detection_i
     lidar_detection_info.current_scene.reliable = {1.0};
 }
 
-void static generateObjectInfo(waytous_perception_msgs::Object object_info, int obj_id,
+void static generateObjectInfo(waytous_perception_msgs::Object& object_info, int obj_id,
                         const pcl::PointCloud<pcl::PointXYZI>::Ptr &pointcloud, BoxQ box) {
     object_info.id = obj_id;
     // sensor type: lidar

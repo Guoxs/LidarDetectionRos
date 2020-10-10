@@ -1,9 +1,10 @@
 //
 // Created by guoxs on 2020/9/23.
 //
+#include "global.h"
+#include "msg_util.cpp"
 #include "IO/lidarIO.cpp"
 #include "render/render.h"
-#include "global.h"
 #include "processing/processPointClouds.h"
 #include "processing/processPointClouds.cpp"
 
@@ -16,14 +17,17 @@
 void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     ProcessPointClouds<pcl::PointXYZI>* PointProcessor,
                     const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputCloud,
-                    const pcl::PointCloud<pcl::PointXYZI>::Ptr& filteredBgCloud);
+                    const pcl::PointCloud<pcl::PointXYZI>::Ptr& filteredBgCloud,
+                    waytous_perception_msgs::ObjectArray& lidar_detection_info);
 
 void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& viewer);
 
-void callBack(sensor_msgs::PointCloud2::ConstPtr data,
+void callBack(const sensor_msgs::PointCloud2::ConstPtr& data,
             pcl::visualization::PCLVisualizer::Ptr& viewer,
             ProcessPointClouds<pcl::PointXYZI>* pointProcessor,
-            pcl::PointCloud<pcl::PointXYZI>::Ptr& backgroundCloud){
+            pcl::PointCloud<pcl::PointXYZI>::Ptr& backgroundCloud,
+            const ros::Publisher& objects_info_pub,
+            waytous_perception_msgs::ObjectArray& lidar_detection_info){
     //indices for nan removing
     std::vector<int> indices;
     if (data != nullptr)
@@ -57,7 +61,9 @@ void callBack(sensor_msgs::PointCloud2::ConstPtr data,
             //default color is white
             renderPointCloud(viewer, inputCloud, "inputCloud", Color(0,1,1));
             //performing detection
-            lidarDetection(viewer, pointProcessor, inputCloud, backgroundCloud);
+            lidarDetection(viewer, pointProcessor, inputCloud, backgroundCloud, lidar_detection_info);
+            //publish object info
+            objects_info_pub.publish(lidar_detection_info);
             viewer->spinOnce ();
         }
         viewer->spinOnce ();
@@ -67,7 +73,7 @@ void callBack(sensor_msgs::PointCloud2::ConstPtr data,
 int main (int argc, char** argv)
 {
     ros::init (argc, argv, "lidar_detection_online");
-    ros::NodeHandle n;
+    ros::NodeHandle nh;
     std::string topicName = "/rslidar_points";
 
     auto* pointProcessor = new ProcessPointClouds<pcl::PointXYZI>();
@@ -77,8 +83,14 @@ int main (int argc, char** argv)
     CameraAngle setAngle = XY;
     initCamera(setAngle, viewer);
 
-    ros::Subscriber subscriber = n.subscribe<sensor_msgs::PointCloud2>(topicName, 5,
-            boost::bind(&callBack, _1, viewer, pointProcessor, backgroundCloud));
+    //define object publisher
+    ros::Publisher objects_info_pub = nh.advertise<waytous_perception_msgs::ObjectArray>("/objects_info", 5);
+    waytous_perception_msgs::ObjectArray lidar_detection_info;
+    // type: normal
+    initPublisher(lidar_detection_info, 0);
+
+    ros::Subscriber subscriber = nh.subscribe<sensor_msgs::PointCloud2>(topicName, 5,
+            boost::bind(&callBack, _1, viewer, pointProcessor, backgroundCloud, objects_info_pub, lidar_detection_info));
 
     ros::spin();
     return 0;
@@ -87,7 +99,8 @@ int main (int argc, char** argv)
 void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     ProcessPointClouds<pcl::PointXYZI>* pointProcessor,
                     const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputCloud,
-                    const pcl::PointCloud<pcl::PointXYZI>::Ptr& filteredBgCloud)
+                    const pcl::PointCloud<pcl::PointXYZI>::Ptr& filteredBgCloud,
+                    waytous_perception_msgs::ObjectArray& lidar_detection_info)
 {
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredInputCloud(new pcl::PointCloud<pcl::PointXYZI>);
     // box filter
@@ -147,6 +160,11 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
         BoxQ box = pointProcessor->minBoxQ(cluster);
         renderBox(viewer, box, clusterId);
         ++clusterId;
+
+        //publish object info
+        waytous_perception_msgs::Object object_info;
+        generateObjectInfo(object_info, clusterId, cluster, box);
+        lidar_detection_info.foreground_objects.push_back(object_info);
     }
 }
 

@@ -8,10 +8,11 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include "global.h"
+#include "msg_util.cpp"
 #include "IO/lidarIO.h"
 #include "IO/lidarIO.cpp"
 #include "render/render.h"
-#include "msg_util.cpp"
 #include "processing/processPointClouds.h"
 #include "processing/processPointClouds.cpp"
 
@@ -20,7 +21,7 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     ProcessPointClouds<pcl::PointXYZI>* PointProcessor,
                     const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputCloud,
                     const pcl::PointCloud<pcl::PointXYZI>::Ptr& filteredBgCloud,
-                    waytous_perception_msgs::ObjectArray lidar_detection_info);
+                    waytous_perception_msgs::ObjectArray& lidar_detection_info);
 
 void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& viewer);
 
@@ -140,7 +141,7 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     ProcessPointClouds<pcl::PointXYZI>* pointProcessor,
                     const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputCloud,
                     const pcl::PointCloud<pcl::PointXYZI>::Ptr& filteredBgCloud,
-                    waytous_perception_msgs::ObjectArray lidar_detection_info)
+                    waytous_perception_msgs::ObjectArray& lidar_detection_info)
 {
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredInputCloud(new pcl::PointCloud<pcl::PointXYZI>);
     // box filter

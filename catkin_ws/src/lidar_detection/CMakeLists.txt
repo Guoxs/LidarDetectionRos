@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
             std_msgs
             sensor_msgs
             geometry_msgs
+            jsk_recognition_msgs
             waytous_perception_msgs
 )
 
@@ -168,6 +169,10 @@ target_link_libraries (lidarDetection ${PCL_LIBRARIES} ${catkin_LIBRARIES})
 add_executable (lidarDetectionBag src/lidarDetectionBag.cpp src/render/render.cpp src/IO/lidarIO.cpp
         src/processing/processPointClouds.cpp src/minbox/minBox.cpp)
 target_link_libraries (lidarDetectionBag ${PCL_LIBRARIES} ${catkin_LIBRARIES})
+
+add_executable (lidarDetectionBagRviz src/lidarDetectionBagRviz.cpp src/render/render.cpp src/IO/lidarIO.cpp
+        src/processing/processPointClouds.cpp src/minbox/minBox.cpp)
+target_link_libraries (lidarDetectionBagRviz ${PCL_LIBRARIES} ${catkin_LIBRARIES})
 
 add_executable (lidarDetectionOnline src/lidarDetectionOnline.cpp src/render/render.cpp src/IO/lidarIO.cpp
         src/processing/processPointClouds.cpp src/minbox/minBox.cpp)

@@ -4,12 +4,13 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Pose.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <jsk_recognition_msgs/BoundingBoxArray.h>
 
 #include "render/box.h"
 #include "global.h"
 #include "waytous_perception_msgs/ObjectArray.h"
 
-void static initPublisher(waytous_perception_msgs::ObjectArray lidar_detection_info, int type) {
+void initPublisher(waytous_perception_msgs::ObjectArray lidar_detection_info, int type) {
     // type: normal
     lidar_detection_info.current_scene.type = type;
     waytous_perception_msgs::Rect scence_rect;
@@ -22,7 +23,7 @@ void static initPublisher(waytous_perception_msgs::ObjectArray lidar_detection_i
     lidar_detection_info.current_scene.reliable = {1.0};
 }
 
-void static generateObjectInfo(waytous_perception_msgs::Object& object_info, int obj_id,
+void generateObjectInfo(waytous_perception_msgs::Object& object_info, int obj_id,
                         const pcl::PointCloud<pcl::PointXYZI>::Ptr &pointcloud, BoxQ box) {
     object_info.id = obj_id;
     // sensor type: lidar
@@ -49,8 +50,8 @@ void static generateObjectInfo(waytous_perception_msgs::Object& object_info, int
     pose.orientation.w = box.bboxQuaternion.w();
     object_info.pose = pose;
     //dimensions
-    object_info.dimensions.x = box.cube_width;
-    object_info.dimensions.y = box.cube_length;
+    object_info.dimensions.x = box.cube_length;
+    object_info.dimensions.y = box.cube_width;
     object_info.dimensions.z = box.cube_height;
     //pointcloud
     sensor_msgs::PointCloud2 cloud;
@@ -71,4 +72,17 @@ void static generateObjectInfo(waytous_perception_msgs::Object& object_info, int
     object_info.velocity_covariance = {};
     object_info.motion_state = 1;
     object_info.trace = {};
+}
+
+void copyBoxes(waytous_perception_msgs::ObjectArray& objects_info,
+               jsk_recognition_msgs::BoundingBoxArray& bounding_boxes){
+    for (const auto& object : objects_info.foreground_objects){
+        jsk_recognition_msgs::BoundingBox bbox;
+        bbox.header = bounding_boxes.header;
+        bbox.dimensions = object.dimensions;
+        bbox.pose = object.pose;
+        bbox.label = static_cast<char32_t>(object.label_type);
+        bbox.value = object.score;
+        bounding_boxes.boxes.push_back(bbox);
+    }
 }

@@ -152,7 +152,7 @@ void lidarDetection(ProcessPointClouds<pcl::PointXYZI>* pointProcessor,
     // foregroundCloud = radiusFilter(foregroundCloud, 0.8, 5);
 
     // remove dust
-    foregroundCloud = pointProcessor->dustRemove(foregroundCloud, 15.0, 500.0);
+    foregroundCloud = pointProcessor->dustRemove(foregroundCloud, 25.0, 100.0);
 
     if (foregroundCloud->points.empty()){
         return;

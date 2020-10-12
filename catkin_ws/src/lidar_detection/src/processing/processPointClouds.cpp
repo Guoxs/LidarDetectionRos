@@ -119,7 +119,8 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::dustRemove(
 
     for (const auto & searchPoint : inputCloud->points) {
         float distance = sqrt(pow(searchPoint.x, 2) + pow(searchPoint.y, 2) + pow(searchPoint.z, 2));
-        if ((searchPoint.intensity >= intensityThreshold) || (distance >= distanceThreshold)){
+        // std::cout << "intensity: " << searchPoint.intensity << " distance: " << distance << std::endl;
+        if ((searchPoint.intensity <= intensityThreshold) || (distance >= distanceThreshold)){
                 foreground->points.push_back(searchPoint);
         }
     }

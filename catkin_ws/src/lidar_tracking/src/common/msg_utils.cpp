@@ -6,7 +6,6 @@
 #include <tf/tf.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-#include "../base/object.h"
 #include "geometry_util.h"
 #include <waytous_perception_msgs/ObjectArray.h>
 

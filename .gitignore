@@ -4,3 +4,4 @@ catkin_ws/build/
 catkin_ws/devel/
 catkin_ws/.catkin_workspace
 .idea/
+catkin_ws/src/*/cmake-build-debug

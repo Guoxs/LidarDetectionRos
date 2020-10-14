@@ -6,7 +6,7 @@
  */
 
 #include <vector>
-#include <stdio.h>
+#include <cstdio>
 #include <Eigen/Dense>
 #include <ros/ros.h>
 #include <tf/transform_datatypes.h>

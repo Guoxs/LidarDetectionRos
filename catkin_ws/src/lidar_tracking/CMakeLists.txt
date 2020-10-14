@@ -21,6 +21,9 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(PCL 1.8 REQUIRED)
 
+# OpenCV
+find_package(OpenCV REQUIRED)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -128,6 +131,7 @@ include_directories(
         ../../devel/include
         ${catkin_INCLUDE_DIRS}
         ${PCL_INCLUDE_DIRS}
+        ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -160,8 +164,12 @@ include_directories(
 #   ${catkin_LIBRARIES}
 # )
 
-add_executable (hmTrackNode src/hmTrackNode.cpp src/common/geometry_util.cc )
-target_link_libraries (hmTrackNode ${PCL_LIBRARIES} ${catkin_LIBRARIES})
+add_executable(hmTrackNode src/hmTrackNode.cpp src/base/object.cc src/base/object_supplement.cc src/base/types.cc
+        src/common/geometry_util.cc src/common/graph_util.cc src/common/hungarian_bigraph_matcher.cc
+        src/feature/feature_descriptor.cc
+        src/filter/hm_tracker.cc src/filter/hungarian_matcher.cc src/filter/kalman_filter.cc src/filter/object_track.cc
+        src/tracked_obj/tracked_object.cc src/tracked_obj/track_object_distance.cc)
+target_link_libraries(hmTrackNode ${PCL_LIBRARIES} ${catkin_LIBRARIES} ${OpenCV_LIBS})
 
 #############
 ## Install ##

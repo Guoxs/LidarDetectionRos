@@ -48,12 +48,12 @@ int main (int argc, char** argv)
     }
 
     //define pointcloud publisher to rviz
-    ros::Publisher point_cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/rslidar_info", 10);
+    ros::Publisher point_cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/rslidar_info", 5);
     //define boundingbox publisher to rviz
-    ros::Publisher bounding_boxes_pub = nh.advertise<jsk_recognition_msgs::BoundingBoxArray>("bounding_boxes_info", 10);
+    ros::Publisher bounding_boxes_pub = nh.advertise<jsk_recognition_msgs::BoundingBoxArray>("bounding_boxes_info", 5);
 
     //define object publisher
-    ros::Publisher objects_info_pub = nh.advertise<waytous_perception_msgs::ObjectArray>("/objects_info", 10);
+    ros::Publisher objects_info_pub = nh.advertise<waytous_perception_msgs::ObjectArray>("/detection_objects_info", 5);
 
     //indices for nan removing
     std::vector<int> indices;

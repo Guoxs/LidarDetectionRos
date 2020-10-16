@@ -28,7 +28,7 @@ class HmObjectTracker {
 
       // @brief initialize tracker's configs
       // @return true if initialize successfully, otherwise return false
-      bool Init(ros::NodeHandle nh);
+      bool Init(const ros::NodeHandle& nh);
 
       // @brief track detected objects over consecutive frames
       // @params[IN] objects: recently detected objects
@@ -81,7 +81,7 @@ class HmObjectTracker {
       // @brief compute objects' shape feature
       // @params[OUT] object: object for computing shape feature
       // @return nothing
-      void ComputeShapeFeatures(std::shared_ptr<TrackedObject>* obj);
+      void ComputeShapeFeatures(std::shared_ptr<TrackedObject>* obj) const;
 
       // @brief transform tracked object with given pose
       // @params[OUT] obj: tracked object for transfromation
@@ -102,7 +102,7 @@ class HmObjectTracker {
       // @params[IN] time_diff: time interval for predicting
       // @return nothing
       void ComputeTracksPredict(std::vector<Eigen::VectorXf>* tracks_predict,
-                                const double time_diff);
+                                double time_diff);
 
       // @brief update assigned tracks
       // @params[IN] tracks_predict: predicted states of maintained tracks
@@ -114,7 +114,7 @@ class HmObjectTracker {
           std::vector<Eigen::VectorXf>* tracks_predict,
           std::vector<std::shared_ptr<TrackedObject>>* new_objects,
           const std::vector<std::pair<int, int>>& assignments,
-          const double time_diff);
+          double time_diff);
 
       // @brief update tracks without matched objects
       // @params[IN] tracks_predict: predicted states of maintained tracks
@@ -123,7 +123,7 @@ class HmObjectTracker {
       // @return nothing
       void UpdateUnassignedTracks(
           const std::vector<Eigen::VectorXf>& tracks_predict,
-          const std::vector<int>& unassigned_tracks, const double time_diff);
+          const std::vector<int>& unassigned_tracks, double time_diff);
 
       // @brief create new tracks for objects without matched track
       // @params[IN] new_objects: recently detected objects

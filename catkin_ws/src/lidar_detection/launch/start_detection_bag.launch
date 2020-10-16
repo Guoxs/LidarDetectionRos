@@ -1,6 +1,5 @@
 <launch>
-  <!-- rslidar detection 2020-09-19-15-22-45 2020-09-19-15-27-53-->
   <node pkg="lidar_detection" name="lidarDetectionBagRviz" type="lidarDetectionBagRviz" output="screen"
-        args="2020-09-19-15-27-53.bag"/>
-  <node name="rviz" pkg="rviz" type="rviz"/>
+        args="20200919/32/01.bag"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find lidar_detection)/config.rviz"/>
 </launch>

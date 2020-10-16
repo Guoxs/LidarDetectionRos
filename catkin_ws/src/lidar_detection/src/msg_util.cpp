@@ -3,6 +3,8 @@
 //
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Point32.h>
+#include <pcl/surface/convex_hull.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <jsk_recognition_msgs/BoundingBoxArray.h>
 
@@ -21,6 +23,17 @@ void initPublisher(waytous_perception_msgs::ObjectArray lidar_detection_info, in
     lidar_detection_info.current_scene.rect = {scence_rect};
     lidar_detection_info.background_objects = {};
     lidar_detection_info.current_scene.reliable = {1.0};
+}
+
+pcl::PointCloud<pcl::PointXYZI>::Ptr generateConvexHull(const pcl::PointCloud<pcl::PointXYZI>::Ptr &cloud){
+    pcl::ConvexHull<pcl::PointXYZI> hull;
+    hull.setInputCloud(cloud);
+    hull.setDimension(3);
+
+    std::vector<pcl::Vertices> polygons;
+    pcl::PointCloud<pcl::PointXYZI>::Ptr surface_hull(new pcl::PointCloud<pcl::PointXYZI>);
+    hull.reconstruct(*surface_hull, polygons);
+    return surface_hull;
 }
 
 void generateObjectInfo(waytous_perception_msgs::Object& object_info, int obj_id,
@@ -58,8 +71,14 @@ void generateObjectInfo(waytous_perception_msgs::Object& object_info, int obj_id
     pcl::toROSMsg(*pointcloud, cloud);
     object_info.pointcloud = cloud;
     //Polygon
-    object_info.convex_hull = {};
-
+    pcl::PointCloud<pcl::PointXYZI>::Ptr hull = generateConvexHull(pointcloud);
+    for (const auto point : hull->points){
+        geometry_msgs::Point32 p;
+        p.x = point.x;
+        p.y = point.y;
+        p.z = point.z;
+        object_info.convex_hull.points.push_back(p);
+    }
     object_info.score = 1.0;
 
     object_info.track_id = obj_id;

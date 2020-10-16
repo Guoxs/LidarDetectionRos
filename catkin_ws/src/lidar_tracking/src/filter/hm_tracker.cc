@@ -16,7 +16,7 @@
 #include "../tracked_obj/track_object_distance.h"
 
 
-bool HmObjectTracker::Init(ros::NodeHandle nh) 
+bool HmObjectTracker::Init(const ros::NodeHandle& nh)
 {
   // Initialize tracker's configs
   nh_=nh;
@@ -131,7 +131,7 @@ bool HmObjectTracker::Init(ros::NodeHandle nh)
     cout << "Failed to set histogram distance weight! " << name()<<endl;
     return false;
   }
-  use_histogram_for_match_ = this->histogram_distance_weight > FLT_EPSILON ? true : false;
+  use_histogram_for_match_ = this->histogram_distance_weight > FLT_EPSILON;
   if (this->histogram_bin_size <= 0) 
   {
     cout << "invalid histogram bin size of " << name()<<endl;
@@ -326,7 +326,7 @@ void HmObjectTracker::ConstructTrackedObjects(
 }
 
 void HmObjectTracker::ComputeShapeFeatures(
-    std::shared_ptr<TrackedObject>* obj) 
+    std::shared_ptr<TrackedObject>* obj) const
 {
   // Compute object's shape feature
   std::shared_ptr<Object>& temp_object = (*obj)->object_ptr;

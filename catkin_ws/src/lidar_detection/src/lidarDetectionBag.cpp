@@ -167,12 +167,12 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
     }
 
     //Euclidean clustering
-      // std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->euclideanCluster(
-      // foregroundCloud, 4, 3, 4000);
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->euclideanCluster(
+       foregroundCloud, 4, 3, 4000);
 
     //DBSCSN Clustering
-    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->DBSCANCluster(
-            foregroundCloud, 2, 4, 3, 4000);
+//    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->DBSCANCluster(
+//            foregroundCloud, 2, 4, 3, 4000);
 
     if (cloudClusters.empty()){
         return;

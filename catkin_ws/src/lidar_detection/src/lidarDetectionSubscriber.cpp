@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 
     ros::NodeHandle nh;
 
-    ros::Subscriber objects_info_pub = nh.subscribe("/objects_info", 5, objectsInfoCallback);
+    ros::Subscriber objects_info_pub = nh.subscribe("/detection_objects_info", 5, objectsInfoCallback);
 
     ros::spin();
 

@@ -6,8 +6,8 @@
 #define SRC_GLOBAL_H
 
 //set point cloud range
-Eigen::Vector4f minPoint(0, -55, -5, 1);
-Eigen::Vector4f maxPoint( 100, 100, 15, 1);
+Eigen::Vector4f minPoint(-10, -80, -5, 1);
+Eigen::Vector4f maxPoint( 150, 150, 15, 1);
 //whether recreate background file
 bool recordBackground = false;
 //background frame number

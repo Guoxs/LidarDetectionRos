@@ -146,6 +146,7 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredInputCloud(new pcl::PointCloud<pcl::PointXYZI>);
     // box filter
     filteredInputCloud = pointProcessor->BoxFilter(inputCloud, minPoint, maxPoint);
+    //renderPointCloud(viewer, filteredInputCloud,"filteredInputCloud",Color(0,1,1));
     //voxel filter
     filteredInputCloud = pointProcessor->voxelFilter(filteredInputCloud, 0.3);
 

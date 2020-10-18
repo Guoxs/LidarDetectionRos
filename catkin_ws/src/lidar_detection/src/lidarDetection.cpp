@@ -76,13 +76,13 @@ int main (int argc, char** argv)
     //load background point cloud
     std::cout << "Loading background file..." << std::endl;
     pcl::PointCloud<pcl::PointXYZI>::Ptr bgCloud(new pcl::PointCloud<pcl::PointXYZI>);
-    bgCloud = cloudIO->loadPcd(rootPath + "background.pcd");
+    bgCloud = cloudIO->loadPcd(rootPath + "background_voxel.pcd");
     // performing box filter and voxel filter on bgCloud
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredBgCloud(new pcl::PointCloud<pcl::PointXYZI>);
     // box filter
     filteredBgCloud = pointProcessor->BoxFilter(bgCloud, minPoint, maxPoint);
     //voxel filter
-    filteredBgCloud = pointProcessor->voxelFilter(filteredBgCloud, 0.3);
+    // filteredBgCloud = pointProcessor->voxelFilter(filteredBgCloud, 0.3);
 
     // set viewer
     pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
@@ -95,8 +95,9 @@ int main (int argc, char** argv)
         pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud(new pcl::PointCloud<pcl::PointXYZI>);
         std::vector<boost::filesystem::path> stream = cloudIO->streamPcd(dataPath);
         auto streamIterator = stream.begin();
-
+        int c_i = 0;
         while (!viewer->wasStopped ()){
+
             // Clear viewer
             viewer->removeAllPointClouds();
             viewer->removeAllShapes();
@@ -119,6 +120,18 @@ int main (int argc, char** argv)
                 streamIterator = stream.begin();
 
             viewer->spinOnce ();
+
+            while (1)
+            {
+                if ('n' == getchar()){
+                    break;
+                }
+//                else if ('a' == getchar()){
+//                    streamIterator --;
+//                    streamIterator --;
+//                    break;
+//                }
+            }
         }
 
         while (!viewer->wasStopped ())
@@ -170,7 +183,7 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
 
     //remove background in inputCloud
     pcl::PointCloud<pcl::PointXYZI>::Ptr foregroundCloud(new pcl::PointCloud<pcl::PointXYZI>);
-    foregroundCloud = pointProcessor->bkgRemove(filteredInputCloud, filteredBgCloud, 0.8, 1);
+    foregroundCloud = pointProcessor->bkgRemove(filteredInputCloud, filteredBgCloud, 0.9, 1);
     //remove outlier
     // foregroundCloud = radiusFilter(foregroundCloud, 0.8, 5);
     // renderPointCloud(viewer, foregroundCloud, "foregroundCloud",Color(1,0,0));

@@ -89,13 +89,13 @@ int main (int argc, char** argv)
     //load background point cloud
     std::cout << "Loading background file..." << std::endl;
     pcl::PointCloud<pcl::PointXYZI>::Ptr bgCloud(new pcl::PointCloud<pcl::PointXYZI>);
-    bgCloud = cloudIO->loadPcd(rootPath + "background.pcd");
+    bgCloud = cloudIO->loadPcd(rootPath + "background_voxel.pcd");
     // performing box filter and voxel filter on bgCloud
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredBgCloud(new pcl::PointCloud<pcl::PointXYZI>);
     // box filter
     filteredBgCloud = pointProcessor->BoxFilter(bgCloud, minPoint, maxPoint);
     //voxel filter
-    filteredBgCloud = pointProcessor->voxelFilter(filteredBgCloud, 0.3);
+    //filteredBgCloud = pointProcessor->voxelFilter(filteredBgCloud, 0.3);
 
     //show video results
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud(new pcl::PointCloud<pcl::PointXYZI>);

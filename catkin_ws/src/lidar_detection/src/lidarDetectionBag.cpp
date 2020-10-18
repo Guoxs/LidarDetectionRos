@@ -81,6 +81,8 @@ int main (int argc, char** argv)
             backgroundNum--;
             it ++;
         }
+        //voxel filter
+        backgroundCloud = pointProcessor->voxelFilter(backgroundCloud, 0.3);
         //save background point cloud
         std::string outputPath = rootPath + "background.pcd";
         cloudIO->savePcd(backgroundCloud, outputPath);
@@ -89,13 +91,11 @@ int main (int argc, char** argv)
     //load background point cloud
     std::cout << "Loading background file..." << std::endl;
     pcl::PointCloud<pcl::PointXYZI>::Ptr bgCloud(new pcl::PointCloud<pcl::PointXYZI>);
-    bgCloud = cloudIO->loadPcd(rootPath + "background.pcd");
-    // performing box filter and voxel filter on bgCloud
+    bgCloud = cloudIO->loadPcd(rootPath + "background_voxel.pcd");
+
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredBgCloud(new pcl::PointCloud<pcl::PointXYZI>);
     // box filter
     filteredBgCloud = pointProcessor->BoxFilter(bgCloud, minPoint, maxPoint);
-    //voxel filter
-    filteredBgCloud = pointProcessor->voxelFilter(filteredBgCloud, 0.3);
 
     // set viewer
     pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
@@ -155,7 +155,7 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
 
     //remove background in inputCloud
     pcl::PointCloud<pcl::PointXYZI>::Ptr foregroundCloud(new pcl::PointCloud<pcl::PointXYZI>);
-    foregroundCloud = pointProcessor->bkgRemove(filteredInputCloud, filteredBgCloud, 0.8, 1);
+    foregroundCloud = pointProcessor->bkgRemove(filteredInputCloud, filteredBgCloud, 0.9, 1);
     //remove outlier
     // foregroundCloud = radiusFilter(foregroundCloud, 0.8, 5);
     // renderPointCloud(viewer, foregroundCloud, "foregroundCloud",Color(1,0,0));
@@ -168,12 +168,12 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
     }
 
     //Euclidean clustering
-    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->euclideanCluster(
-       foregroundCloud, 4, 3, 4000);
+//    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->euclideanCluster(
+//       foregroundCloud, 4, 3, 4000);
 
     //DBSCSN Clustering
-//    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->DBSCANCluster(
-//            foregroundCloud, 2, 4, 3, 4000);
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->DBSCANCluster(
+            foregroundCloud, 2, 4, 3, 4000);
 
     if (cloudClusters.empty()){
         return;

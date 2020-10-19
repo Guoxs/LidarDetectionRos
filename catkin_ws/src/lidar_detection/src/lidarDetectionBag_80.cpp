@@ -82,7 +82,7 @@ int main (int argc, char** argv)
             it ++;
         }
         //voxel filter
-        backgroundCloud = pointProcessor->voxelFilter(backgroundCloud, 0.3);
+        backgroundCloud = pointProcessor->voxelFilter(backgroundCloud, 0.8);
         //save background point cloud
         std::string outputPath = rootPath + "background.pcd";
         cloudIO->savePcd(backgroundCloud, outputPath);
@@ -91,13 +91,13 @@ int main (int argc, char** argv)
     //load background point cloud
     std::cout << "Loading background file..." << std::endl;
     pcl::PointCloud<pcl::PointXYZI>::Ptr bgCloud(new pcl::PointCloud<pcl::PointXYZI>);
-    bgCloud = cloudIO->loadPcd(rootPath + "background_voxel.pcd");
+    bgCloud = cloudIO->loadPcd(rootPath + "background_80.pcd");
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredBgCloud(new pcl::PointCloud<pcl::PointXYZI>);
     // box filter
     filteredBgCloud = pointProcessor->BoxFilter(bgCloud, minPoint, maxPoint);
     //voxel filter
-    filteredBgCloud = pointProcessor->voxelFilter(filteredBgCloud, 0.3);
+    filteredBgCloud = pointProcessor->voxelFilter(filteredBgCloud, 0.8);
 
     // set viewer
     pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
@@ -115,6 +115,7 @@ int main (int argc, char** argv)
         if (input != nullptr)
         {
             pcl::fromROSMsg(*input,*inputCloud);
+            inputCloud->is_dense = false;
             pcl::removeNaNFromPointCloud(*inputCloud, *inputCloud, indices);
             //default color is white
             renderPointCloud(viewer,inputCloud,"inputCloud", Color(1,1,1));
@@ -150,16 +151,15 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
     filteredInputCloud = pointProcessor->BoxFilter(inputCloud, minPoint, maxPoint);
     // renderPointCloud(viewer, filteredInputCloud,"filteredInputCloud",Color(0,1,1));
     //voxel filter
-    filteredInputCloud = pointProcessor->voxelFilter(filteredInputCloud, 0.3);
+    filteredInputCloud = pointProcessor->voxelFilter(filteredInputCloud, 0.8);
 
-    // renderPointCloud(viewer, filteredBgCloud,"filterBgCloud",Color(1,1,1));
     // renderPointCloud(viewer, filteredInputCloud,"filteredInputCloud",Color(1,1,1));
 
     //remove background in inputCloud
     pcl::PointCloud<pcl::PointXYZI>::Ptr foregroundCloud(new pcl::PointCloud<pcl::PointXYZI>);
     foregroundCloud = pointProcessor->bkgRemove(filteredInputCloud, filteredBgCloud, 0.9, 1);
     //remove outlier
-//     foregroundCloud = pointProcessor->radiusFilter(foregroundCloud, 2.5, 3);
+    foregroundCloud = pointProcessor->radiusFilter(foregroundCloud, 1.0, 10);
     // renderPointCloud(viewer, foregroundCloud, "foregroundCloud",Color(1,0,0));
 
     // remove dust
@@ -175,7 +175,7 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
 
     //DBSCSN Clustering
     std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->DBSCANCluster(
-            foregroundCloud, 5, 2.5, 5, 3000);
+            foregroundCloud, 5, 2.5, 10, 8000);
 
     if (cloudClusters.empty()){
         return;

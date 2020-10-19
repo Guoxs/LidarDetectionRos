@@ -1,6 +1,6 @@
 <launch>
   <node pkg="lidar_detection" name="lidarDetectionBagRviz" type="lidarDetectionBagRviz" output="screen"
-        args="20201015/32/02.bag"/>
+        args="20201015/32/01.bag"/>
 
   <node pkg="lidar_tracking" name="hmTrackNode" type="hmTrackNode" output="screen"/>
     <param name="track_cached_history_size_maximum" type="int" value="5"/>

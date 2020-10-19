@@ -170,6 +170,10 @@ add_executable (lidarDetectionBag src/lidarDetectionBag.cpp src/render/render.cp
         src/processing/processPointClouds.cpp src/minbox/minBox.cpp)
 target_link_libraries (lidarDetectionBag ${PCL_LIBRARIES} ${catkin_LIBRARIES})
 
+add_executable (lidarDetectionBag_80 src/lidarDetectionBag_80.cpp src/render/render.cpp src/IO/lidarIO.cpp
+        src/processing/processPointClouds.cpp src/minbox/minBox.cpp)
+target_link_libraries (lidarDetectionBag_80 ${PCL_LIBRARIES} ${catkin_LIBRARIES})
+
 add_executable (lidarDetectionBagRviz src/lidarDetectionBagRviz.cpp src/render/render.cpp src/IO/lidarIO.cpp
         src/processing/processPointClouds.cpp src/minbox/minBox.cpp)
 target_link_libraries (lidarDetectionBagRviz ${PCL_LIBRARIES} ${catkin_LIBRARIES})

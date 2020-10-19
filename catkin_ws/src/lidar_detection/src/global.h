@@ -7,7 +7,7 @@
 
 //set point cloud range
 Eigen::Vector4f minPoint(-10, -80, -5, 1);
-Eigen::Vector4f maxPoint( 150, 150, 15, 1);
+Eigen::Vector4f maxPoint( 150, 200, 15, 1);
 //whether recreate background file
 bool recordBackground = false;
 //background frame number

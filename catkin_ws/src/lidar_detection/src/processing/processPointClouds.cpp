@@ -74,7 +74,7 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::radiusFilter(
     sor.setInputCloud(cloud);
     sor.setRadiusSearch(radius);
     sor.setMinNeighborsInRadius(min_pts);
-    sor.setNegative(true);
+    sor.setNegative(false);
     sor.filter(*cloud_filter);
     return cloud_filter;
 }

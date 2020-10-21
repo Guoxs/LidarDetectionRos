@@ -6,13 +6,13 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-#include "global.h"
 #include "msg_util.cpp"
 #include "IO/lidarIO.cpp"
 #include "render/render.h"
 #include "processing/processPointClouds.h"
 #include "processing/processPointClouds.cpp"
 
+int backgroundNum = 50;
 
 void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     ProcessPointClouds<pcl::PointXYZI>* PointProcessor,
@@ -46,8 +46,7 @@ void callBack(const sensor_msgs::PointCloud2::ConstPtr& data,
                 std::cout << "Background recording finished, processing background file..." << std::endl;
 
                 renderPointCloud(viewer, backgroundCloud, "backgroundCloud", Color(1,1,1));
-                // box filter
-                 backgroundCloud = pointProcessor->BoxFilter(backgroundCloud, minPoint, maxPoint);
+
                 //voxel filter
                 backgroundCloud = pointProcessor->voxelFilter(backgroundCloud, 0.3);
             }
@@ -103,10 +102,8 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     waytous_perception_msgs::ObjectArray& lidar_detection_info)
 {
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredInputCloud(new pcl::PointCloud<pcl::PointXYZI>);
-    // box filter
-     filteredInputCloud = pointProcessor->BoxFilter(inputCloud, minPoint, maxPoint);
     //voxel filter
-    filteredInputCloud = pointProcessor->voxelFilter(filteredInputCloud, 0.3);
+    filteredInputCloud = pointProcessor->voxelFilter(inputCloud, 0.3);
 
     // renderPointCloud(viewer, filteredBgCloud,"filterBgCloud",Color(1,1,1));
     // renderPointCloud(viewer, filteredInputCloud,"filteredInputCloud",Color(1,1,1));

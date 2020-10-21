@@ -1,15 +1,15 @@
 //
 // Created by guoxs on 2020/9/23.
 //
+#include <ros/ros.h>
 #include "IO/lidarIO.h"
 #include "IO/lidarIO.cpp"
 #include "render/render.h"
-#include "global.h"
 #include "msg_util.cpp"
 #include "processing/processPointClouds.h"
 #include "processing/processPointClouds.cpp"
 
-#include <ros/ros.h>
+
 
 void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     ProcessPointClouds<pcl::PointXYZI>* PointProcessor,
@@ -31,14 +31,6 @@ int main (int argc, char** argv)
     std::string dataName = argv[2];
     std::string dataPath = rootPath + dataName;
 
-    if(recordBackground){
-        std::cout << "Recording background..." << std::endl;
-    }
-    else{
-        std::cout << "Skip record background..." << std::endl;
-        std::cout << "### Using '-r' for background recording ###" << std::endl;
-    }
-
     //define object publisher
     ros::Publisher objects_info_pub = nh.advertise<waytous_perception_msgs::ObjectArray>("/objects_info", 5);
     waytous_perception_msgs::ObjectArray lidar_detection_info;
@@ -53,36 +45,10 @@ int main (int argc, char** argv)
     //processing PCD
     auto* pointProcessor = new ProcessPointClouds<pcl::PointXYZI>();
 
-    //record background
-    if (recordBackground){
-        pcl::PointCloud<pcl::PointXYZI>::Ptr backgroundCloud(new pcl::PointCloud<pcl::PointXYZI>);
-        pcl::PointCloud<pcl::PointXYZI>::Ptr tempCloud(new pcl::PointCloud<pcl::PointXYZI>);
-
-        std::string backgroundDataPath = rootPath + "background";
-        std::vector<boost::filesystem::path> bgStream = cloudIO->streamPcd(backgroundDataPath);
-
-        auto bgStreamIterator = bgStream.begin();
-        while(bgStreamIterator != bgStream.end()){
-            tempCloud = cloudIO->loadPcd((*bgStreamIterator).string());
-            pcl::removeNaNFromPointCloud(*tempCloud, *tempCloud, indices);
-            *backgroundCloud = *backgroundCloud + *tempCloud;
-            bgStreamIterator++;
-        }
-        //save background point cloud
-        std::string outputPath = rootPath + "background.pcd";
-        cloudIO->savePcd(backgroundCloud, outputPath);
-    }
-
     //load background point cloud
     std::cout << "Loading background file..." << std::endl;
     pcl::PointCloud<pcl::PointXYZI>::Ptr bgCloud(new pcl::PointCloud<pcl::PointXYZI>);
     bgCloud = cloudIO->loadPcd(rootPath + "background_voxel.pcd");
-    // performing box filter and voxel filter on bgCloud
-    pcl::PointCloud<pcl::PointXYZI>::Ptr filteredBgCloud(new pcl::PointCloud<pcl::PointXYZI>);
-    // box filter
-    filteredBgCloud = pointProcessor->BoxFilter(bgCloud, minPoint, maxPoint);
-    //voxel filter
-    // filteredBgCloud = pointProcessor->voxelFilter(filteredBgCloud, 0.3);
 
     // set viewer
     pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
@@ -95,7 +61,6 @@ int main (int argc, char** argv)
         pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud(new pcl::PointCloud<pcl::PointXYZI>);
         std::vector<boost::filesystem::path> stream = cloudIO->streamPcd(dataPath);
         auto streamIterator = stream.begin();
-        int c_i = 0;
         while (!viewer->wasStopped ()){
 
             // Clear viewer
@@ -110,7 +75,7 @@ int main (int argc, char** argv)
              renderPointCloud(viewer,inputCloud,"inputCloud", Color(1,1,1));
 
             //performing detection
-            lidarDetection(viewer, pointProcessor, inputCloud, filteredBgCloud, lidar_detection_info);
+            lidarDetection(viewer, pointProcessor, inputCloud, bgCloud, lidar_detection_info);
 
             // publish message
             objects_info_pub.publish(lidar_detection_info);
@@ -120,18 +85,6 @@ int main (int argc, char** argv)
                 streamIterator = stream.begin();
 
             viewer->spinOnce ();
-
-            while (1)
-            {
-                if ('n' == getchar()){
-                    break;
-                }
-//                else if ('a' == getchar()){
-//                    streamIterator --;
-//                    streamIterator --;
-//                    break;
-//                }
-            }
         }
 
         while (!viewer->wasStopped ())
@@ -150,7 +103,7 @@ int main (int argc, char** argv)
         renderPointCloud(viewer,inputCloud,"inputCloud", Color(1,1,1));
 
         //performing detection
-        lidarDetection(viewer, pointProcessor, inputCloud, filteredBgCloud, lidar_detection_info);
+        lidarDetection(viewer, pointProcessor, inputCloud, bgCloud, lidar_detection_info);
 
         // publish message
         objects_info_pub.publish(lidar_detection_info);
@@ -173,10 +126,8 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     waytous_perception_msgs::ObjectArray& lidar_detection_info)
 {
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredInputCloud(new pcl::PointCloud<pcl::PointXYZI>);
-    // box filter
-    filteredInputCloud = pointProcessor->BoxFilter(inputCloud, minPoint, maxPoint);
     //voxel filter
-    filteredInputCloud = pointProcessor->voxelFilter(filteredInputCloud, 0.3);
+    filteredInputCloud = pointProcessor->voxelFilter(inputCloud, 0.3);
 
     // renderPointCloud(viewer, filteredBgCloud,"filterBgCloud",Color(1,1,1));
     // renderPointCloud(viewer, filteredInputCloud,"filteredInputCloud",Color(1,1,1));

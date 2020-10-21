@@ -1,5 +1,5 @@
 <launch>
   <node pkg="lidar_detection" name="lidarDetectionBagRviz" type="lidarDetectionBagRviz" output="screen"
-        args="20201015/32/ 01"/>
+        args="20201021/32/ 01"/>
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find lidar_detection)/config.rviz"/>
 </launch>

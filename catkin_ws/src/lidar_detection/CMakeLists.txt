@@ -189,6 +189,9 @@ target_link_libraries (lidarDetectionOnline ${PCL_LIBRARIES} ${catkin_LIBRARIES}
 add_executable (lidarDetectionSubscriber src/lidarDetectionSubscriber.cpp)
 target_link_libraries (lidarDetectionSubscriber ${catkin_LIBRARIES})
 
+add_executable (recordBackground src/recordBackground.cpp src/IO/lidarIO.cpp src/processing/processPointClouds.cpp)
+target_link_libraries (recordBackground ${PCL_LIBRARIES} ${catkin_LIBRARIES})
+
 #############
 ## Install ##
 #############

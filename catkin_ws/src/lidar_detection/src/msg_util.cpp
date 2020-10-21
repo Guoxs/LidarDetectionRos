@@ -9,17 +9,16 @@
 #include <jsk_recognition_msgs/BoundingBoxArray.h>
 
 #include "render/box.h"
-#include "global.h"
 #include "waytous_perception_msgs/ObjectArray.h"
 
 void initPublisher(waytous_perception_msgs::ObjectArray lidar_detection_info, int type) {
     // type: normal
     lidar_detection_info.current_scene.type = type;
     waytous_perception_msgs::Rect scence_rect;
-    scence_rect.x = minPoint[0];
-    scence_rect.y = minPoint[1];
-    scence_rect.w = maxPoint[0] - minPoint[0];
-    scence_rect.h = maxPoint[1] - minPoint[1];
+    scence_rect.x = 0.0;
+    scence_rect.y = 0.0;
+    scence_rect.w = 200;
+    scence_rect.h = 200;
     lidar_detection_info.current_scene.rect = {scence_rect};
     lidar_detection_info.background_objects = {};
     lidar_detection_info.current_scene.reliable = {1.0};

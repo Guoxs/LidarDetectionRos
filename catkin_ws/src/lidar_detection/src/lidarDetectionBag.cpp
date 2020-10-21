@@ -30,13 +30,14 @@ int main (int argc, char** argv)
     ros::init (argc, argv, "lidar_detection_bag");
     ros::NodeHandle nh;
 
-    std::string bagName = argv[1];
+    std::string bagRoot = argv[1];
+    std::string bagName = argv[2];
     std::string rootPath = "/home/guoxs/Documents/Project/Huituo/LidarDetectionRos/data/";
 
     std::cout << "Starting Detecting..." << std::endl;
 
     rosbag::Bag bag;
-    bag.open(rootPath + bagName, rosbag::bagmode::Read);
+    bag.open(rootPath + bagRoot + bagName + ".bag", rosbag::bagmode::Read);
     std::vector<std::string> topics;
     topics.emplace_back("/rslidar_points");
     rosbag::View view(bag, rosbag::TopicQuery(topics));
@@ -69,12 +70,12 @@ int main (int argc, char** argv)
         pcl::PointCloud<pcl::PointXYZI>::Ptr backgroundCloud(new pcl::PointCloud<pcl::PointXYZI>);
         pcl::PointCloud<pcl::PointXYZI>::Ptr tempCloud(new pcl::PointCloud<pcl::PointXYZI>);
 
-        std::string backgroundDataPath = rootPath + "background";
         while ((backgroundNum > 0) & (it != view.end())){
             sensor_msgs::PointCloud2::ConstPtr input = (*it).instantiate<sensor_msgs::PointCloud2>();
             if (input != nullptr)
             {
                 pcl::fromROSMsg(*input,*tempCloud);
+                tempCloud->is_dense = false;
                 pcl::removeNaNFromPointCloud(*tempCloud, *tempCloud, indices);
                 *backgroundCloud = *backgroundCloud + *tempCloud;
             }
@@ -84,14 +85,14 @@ int main (int argc, char** argv)
         //voxel filter
         backgroundCloud = pointProcessor->voxelFilter(backgroundCloud, 0.3);
         //save background point cloud
-        std::string outputPath = rootPath + "background.pcd";
+        std::string outputPath = rootPath + bagRoot + "background.pcd";
         cloudIO->savePcd(backgroundCloud, outputPath);
     }
 
     //load background point cloud
     std::cout << "Loading background file..." << std::endl;
     pcl::PointCloud<pcl::PointXYZI>::Ptr bgCloud(new pcl::PointCloud<pcl::PointXYZI>);
-    bgCloud = cloudIO->loadPcd(rootPath + "background_voxel.pcd");
+    bgCloud = cloudIO->loadPcd(rootPath + bagRoot + "background.pcd");
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredBgCloud(new pcl::PointCloud<pcl::PointXYZI>);
     // box filter
@@ -115,6 +116,7 @@ int main (int argc, char** argv)
         if (input != nullptr)
         {
             pcl::fromROSMsg(*input,*inputCloud);
+            inputCloud->is_dense = false;
             pcl::removeNaNFromPointCloud(*inputCloud, *inputCloud, indices);
             //default color is white
             renderPointCloud(viewer,inputCloud,"inputCloud", Color(1,1,1));

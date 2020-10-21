@@ -1,5 +1,5 @@
 //
-// Created by guoxs on 2020/9/23.
+// Created by guoxs on 2020/10/12.
 //
 #include <ros/ros.h>
 #include <rosbag/bag.h>
@@ -7,23 +7,21 @@
 #include <std_msgs/Int32.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <jsk_recognition_msgs/BoundingBoxArray.h>
 
 #include "global.h"
 #include "msg_util.cpp"
 #include "IO/lidarIO.h"
 #include "IO/lidarIO.cpp"
-#include "render/render.h"
 #include "processing/processPointClouds.h"
 #include "processing/processPointClouds.cpp"
 
 
-void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
-                    ProcessPointClouds<pcl::PointXYZI>* PointProcessor,
+void lidarDetection(ProcessPointClouds<pcl::PointXYZI>* PointProcessor,
                     const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputCloud,
                     const pcl::PointCloud<pcl::PointXYZI>::Ptr& filteredBgCloud,
                     waytous_perception_msgs::ObjectArray& lidar_detection_info);
 
-void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& viewer);
 
 int main (int argc, char** argv)
 {
@@ -50,11 +48,13 @@ int main (int argc, char** argv)
         std::cout << "### Using '-r' for background recording ###" << std::endl;
     }
 
+    //define pointcloud publisher to rviz
+    ros::Publisher point_cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/rslidar_info", 5);
+    //define boundingbox publisher to rviz
+    ros::Publisher bounding_boxes_pub = nh.advertise<jsk_recognition_msgs::BoundingBoxArray>("bounding_boxes_info", 5);
+
     //define object publisher
-    ros::Publisher objects_info_pub = nh.advertise<waytous_perception_msgs::ObjectArray>("/objects_info", 5);
-    waytous_perception_msgs::ObjectArray lidar_detection_info;
-    // type: normal
-    initPublisher(lidar_detection_info, 0);
+    ros::Publisher objects_info_pub = nh.advertise<waytous_perception_msgs::ObjectArray>("/detection_objects_info", 5);
 
     //indices for nan removing
     std::vector<int> indices;
@@ -82,9 +82,8 @@ int main (int argc, char** argv)
             backgroundNum--;
             it ++;
         }
-        //voxel filter
-        backgroundCloud = pointProcessor->voxelFilter(backgroundCloud, 0.8);
         //save background point cloud
+        std::cout << "Saving background file..." << std::endl;
         std::string outputPath = rootPath + bagRoot + "background.pcd";
         cloudIO->savePcd(backgroundCloud, outputPath);
     }
@@ -93,56 +92,52 @@ int main (int argc, char** argv)
     std::cout << "Loading background file..." << std::endl;
     pcl::PointCloud<pcl::PointXYZI>::Ptr bgCloud(new pcl::PointCloud<pcl::PointXYZI>);
     bgCloud = cloudIO->loadPcd(rootPath + bagRoot + "background.pcd");
-
+    // performing box filter and voxel filter on bgCloud
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredBgCloud(new pcl::PointCloud<pcl::PointXYZI>);
     // box filter
     filteredBgCloud = pointProcessor->BoxFilter(bgCloud, minPoint, maxPoint);
     //voxel filter
     filteredBgCloud = pointProcessor->voxelFilter(filteredBgCloud, 0.8);
 
-    // set viewer
-    pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-    CameraAngle setAngle = XY;
-    initCamera(setAngle, viewer);
-
     //show video results
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud(new pcl::PointCloud<pcl::PointXYZI>);
-    while (!viewer->wasStopped ()){
-        // Clear viewer
-        viewer->removeAllPointClouds();
-        viewer->removeAllShapes();
-
+    while (ros::ok()){
         sensor_msgs::PointCloud2::ConstPtr input = (*it).instantiate<sensor_msgs::PointCloud2>();
-        if (input != nullptr)
-        {
-            pcl::fromROSMsg(*input,*inputCloud);
+        //publish point cloud
+        point_cloud_pub.publish(input);
+
+        //init object and bounding box message
+        waytous_perception_msgs::ObjectArray lidar_detection_info;
+        initPublisher(lidar_detection_info, 0);
+        jsk_recognition_msgs::BoundingBoxArray bounding_boxes;
+
+        if (input != nullptr) {
+            pcl::fromROSMsg(*input, *inputCloud);
             inputCloud->is_dense = false;
             pcl::removeNaNFromPointCloud(*inputCloud, *inputCloud, indices);
-            //default color is white
-            renderPointCloud(viewer,inputCloud,"inputCloud", Color(1,1,1));
-
             //performing detection
-            lidarDetection(viewer, pointProcessor, inputCloud, filteredBgCloud, lidar_detection_info);
+            lidarDetection(pointProcessor, inputCloud, filteredBgCloud, lidar_detection_info);
+
+            //copy header
+            lidar_detection_info.header = input->header;
+            bounding_boxes.header = input->header;
+
+            //copy boundingbox info from lidar_detection_info to bounding_boxes
+            copyBoxes(lidar_detection_info, bounding_boxes);
+
+            // publish message
+            objects_info_pub.publish(lidar_detection_info);
+            //publish bounding boxes to rviz
+            bounding_boxes_pub.publish(bounding_boxes);
         }
-
-        // publish message
-        objects_info_pub.publish(lidar_detection_info);
-
         it++;
         if(it == view.end()){
             it = view.begin();
         }
-        viewer->spinOnce ();
-    }
-
-    while (!viewer->wasStopped ())
-    {
-        viewer->spinOnce ();
     }
 }
 
-void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
-                    ProcessPointClouds<pcl::PointXYZI>* pointProcessor,
+void lidarDetection(ProcessPointClouds<pcl::PointXYZI>* pointProcessor,
                     const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputCloud,
                     const pcl::PointCloud<pcl::PointXYZI>::Ptr& filteredBgCloud,
                     waytous_perception_msgs::ObjectArray& lidar_detection_info)
@@ -150,18 +145,14 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredInputCloud(new pcl::PointCloud<pcl::PointXYZI>);
     // box filter
     filteredInputCloud = pointProcessor->BoxFilter(inputCloud, minPoint, maxPoint);
-    // renderPointCloud(viewer, filteredInputCloud,"filteredInputCloud",Color(0,1,1));
     //voxel filter
     filteredInputCloud = pointProcessor->voxelFilter(filteredInputCloud, 0.8);
-
-    // renderPointCloud(viewer, filteredInputCloud,"filteredInputCloud",Color(1,1,1));
 
     //remove background in inputCloud
     pcl::PointCloud<pcl::PointXYZI>::Ptr foregroundCloud(new pcl::PointCloud<pcl::PointXYZI>);
     foregroundCloud = pointProcessor->bkgRemove(filteredInputCloud, filteredBgCloud, 0.9, 1);
     //remove outlier
     foregroundCloud = pointProcessor->radiusFilter(foregroundCloud, 1.0, 10);
-    // renderPointCloud(viewer, foregroundCloud, "foregroundCloud",Color(1,0,0));
 
     // remove dust
     foregroundCloud = pointProcessor->dustRemove(foregroundCloud, 25.0, 100.0);
@@ -171,8 +162,8 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
     }
 
     //Euclidean clustering
-//    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->euclideanCluster(
-//       foregroundCloud, 2.5, 3, 3000);
+      // std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->euclideanCluster(
+      // foregroundCloud, 4, 3, 4000);
 
     //DBSCSN Clustering
     std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->DBSCANCluster(
@@ -182,20 +173,11 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
         return;
     }
 
-    // renderPointCloud(viewer,cloudClusters[0],"obstCloud",Color(1,0,0));
-    // std::cout<<"cloud size: "<< cloudClusters.size() << std::endl;
-
     int clusterId = 0;
-    std::vector<Color> colors = {
-            Color(1,0,0),
-            Color(0,1,0),
-            Color(0,0,1)};
-
     for(const pcl::PointCloud<pcl::PointXYZI>::Ptr& cluster : cloudClusters)
     {
         std::cout << "cluster size ";
         pointProcessor->numPoints(cluster);
-        renderPointCloud(viewer,cluster,"foreCloud"+std::to_string(clusterId), colors[clusterId]);
         std::cout<<"ClusterId: " << clusterId<<std::endl;
         if(cluster->points.size() < 4){
             ++clusterId;
@@ -203,7 +185,6 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
         }
         //render box;
         BoxQ box = pointProcessor->minBoxQ(cluster);
-        renderBox(viewer, box, clusterId);
         ++clusterId;
 
         //publish object info
@@ -212,23 +193,3 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
         lidar_detection_info.foreground_objects.push_back(object_info);
     }
 }
-
-//setAngle: SWITCH CAMERA ANGLE {XY, TopDown, Side, FPS}
-void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& viewer)
-{
-    viewer->setBackgroundColor (0, 0, 0);
-    // set camera position and angle
-    viewer->initCameraParameters();
-    // distance away in meters
-    int distance = 16;
-    switch(setAngle)
-    {
-        case XY : viewer->setCameraPosition(-distance, -distance, distance, 1, 1, 0); break;
-        case TopDown : viewer->setCameraPosition(0, 0, distance, 1, 0, 1); break;
-        case Side : viewer->setCameraPosition(0, -distance, 0, 0, 0, 1); break;
-        case FPS : viewer->setCameraPosition(-10, 0, 0, 0, 0, 1);
-    }
-    if(setAngle!=FPS)
-        viewer->addCoordinateSystem (1.0);
-}
-

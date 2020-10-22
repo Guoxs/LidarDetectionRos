@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="decoder_rs80" name="decoderRS80" type="decoderRS80" output="screen"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find decoder_rs80)/decoderRS80.rviz"/>
+</launch>

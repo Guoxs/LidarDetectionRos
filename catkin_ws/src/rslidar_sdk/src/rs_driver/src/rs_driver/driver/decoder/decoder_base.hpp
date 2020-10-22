@@ -22,6 +22,8 @@
 #pragma once
 #include <rs_driver/common/common_header.h>
 #include <rs_driver/driver/driver_param.h>
+#include <rs_driver/utility/time.h>
+
 namespace robosense
 {
 namespace lidar
@@ -537,7 +539,7 @@ inline double DecoderBase<T_Point>::calculateTimeUTC(const uint8_t* pkt)
   timestamp.data[2] = mpkt_ptr->header.timestamp_utc.sec[3];
   timestamp.data[1] = mpkt_ptr->header.timestamp_utc.sec[4];
   timestamp.data[0] = mpkt_ptr->header.timestamp_utc.sec[5];
-  return (double)timestamp.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0d;
+  return (double)timestamp.ts + ((double)(RS_SWAP_LONG(mpkt_ptr->header.timestamp_utc.ns))) / 1000000000.0;
 }
 
 template <typename T_Point>

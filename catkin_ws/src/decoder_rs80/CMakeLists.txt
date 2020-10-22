@@ -2,19 +2,23 @@ cmake_minimum_required(VERSION 3.0.2)
 project(decoder_rs80)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  rosbag
-  roscpp
-  rslidar_sdk
+        rosbag
+        roscpp
+        sensor_msgs
 )
 
 find_package(PCL 1.8 REQUIRED)
 find_package(rs_driver REQUIRED)
+
+#list(APPEND CMAKE_MODULE_PATH /home/guoxs/Documents/Project/Huituo/rsLIDAR/80/rs_driver/cmake)
+#include(rs_driver)
+
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -121,6 +125,7 @@ catkin_package(
 include_directories(
         include
         ../
+        ../rslidar_sdk/src
         ${catkin_INCLUDE_DIRS}
         ${PCL_INCLUDE_DIRS}
         ${rs_driver_INCLUDE_DIRS}
@@ -157,7 +162,7 @@ include_directories(
 # )
 
 add_executable(decoderRS80 src/decoderRS80.cpp)
-target_link_libraries(decoderRS80 ${PCL_LIBRARIES} ${catkin_LIBRARIES} ${rs_driver_LIBRARIES})
+target_link_libraries(decoderRS80 ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${rs_driver_LIBRARIES})
 
 #############
 ## Install ##

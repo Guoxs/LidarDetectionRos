@@ -60,6 +60,7 @@
   <build_export_depend>rosbag</build_export_depend>
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
+  <build_export_depend>sensor_msgs</build_export_depend>
   <build_export_depend>geometry_msgs</build_export_depend>
   <build_export_depend>jsk_recognition_msgs</build_export_depend>
   <build_export_depend>waytous_perception_msgs</build_export_depend>

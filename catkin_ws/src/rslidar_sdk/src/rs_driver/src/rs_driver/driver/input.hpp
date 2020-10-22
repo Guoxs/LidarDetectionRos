@@ -30,6 +30,8 @@
 #include <rs_driver/common/error_code.h>
 #include <rs_driver/driver/driver_param.h>
 #include <rs_driver/msg/packet_msg.h>
+#include <rs_driver/utility/thread_pool.hpp>
+
 using boost::asio::deadline_timer;
 using boost::asio::ip::udp;
 namespace robosense

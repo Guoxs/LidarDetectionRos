@@ -25,7 +25,7 @@ namespace robosense
 {
 namespace lidar
 {
-inline double getTime(void)
+inline double getTime()
 {
   const auto t = std::chrono::system_clock::now();
   const auto t_sec = std::chrono::duration_cast<std::chrono::duration<double>>(t.time_since_epoch());

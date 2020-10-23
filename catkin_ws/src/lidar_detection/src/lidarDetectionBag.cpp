@@ -15,6 +15,9 @@
 #include "processing/processPointClouds.h"
 #include "processing/processPointClouds.cpp"
 
+Eigen::Vector4f minPoint(-10, -80, -5, 1);
+Eigen::Vector4f maxPoint( 150, 100, 10, 1);
+
 
 void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     ProcessPointClouds<pcl::PointXYZI>* PointProcessor,
@@ -61,6 +64,8 @@ int main (int argc, char** argv)
     pcl::PointCloud<pcl::PointXYZI>::Ptr bgCloud(new pcl::PointCloud<pcl::PointXYZI>);
     bgCloud = cloudIO->loadPcd(rootPath + bagRoot + "background.pcd");
 
+    bgCloud = pointProcessor->BoxFilter(bgCloud, minPoint, maxPoint);
+
     // set viewer
     pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
     CameraAngle setAngle = XY;
@@ -80,7 +85,7 @@ int main (int argc, char** argv)
             inputCloud->is_dense = false;
             pcl::removeNaNFromPointCloud(*inputCloud, *inputCloud, indices);
             //default color is white
-            renderPointCloud(viewer,inputCloud,"inputCloud", Color(1,1,1));
+             renderPointCloud(viewer,inputCloud,"inputCloud", Color(1,1,1));
 
             //performing detection
             lidarDetection(viewer, pointProcessor, inputCloud, bgCloud, lidar_detection_info);
@@ -109,18 +114,23 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     waytous_perception_msgs::ObjectArray& lidar_detection_info)
 {
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredInputCloud(new pcl::PointCloud<pcl::PointXYZI>);
+//    filteredInputCloud = pointProcessor->BoxFilter(inputCloud, minPoint, maxPoint);
     //voxel filter
     filteredInputCloud = pointProcessor->voxelFilter(inputCloud, 0.3);
 
     // renderPointCloud(viewer, filteredBgCloud,"filterBgCloud",Color(1,1,1));
-    // renderPointCloud(viewer, filteredInputCloud,"filteredInputCloud",Color(1,1,1));
+//    renderPointCloud(viewer, filteredInputCloud,"filteredInputCloud",Color(1,1,1));
 
     //remove background in inputCloud
     pcl::PointCloud<pcl::PointXYZI>::Ptr foregroundCloud(new pcl::PointCloud<pcl::PointXYZI>);
+
     foregroundCloud = pointProcessor->bkgRemove(filteredInputCloud, filteredBgCloud, 0.9, 1);
+
+//    foregroundCloud = pointProcessor->PMorphologicalFilter(filteredInputCloud);
+
     //remove outlier
 //     foregroundCloud = pointProcessor->radiusFilter(foregroundCloud, 2.5, 3);
-    // renderPointCloud(viewer, foregroundCloud, "foregroundCloud",Color(1,0,0));
+//    renderPointCloud(viewer, foregroundCloud, "foregroundCloud",Color(1,0,0));
 
     // remove dust
     foregroundCloud = pointProcessor->dustRemove(foregroundCloud, 25.0, 100.0);
@@ -131,11 +141,11 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
 
     //Euclidean clustering
 //    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->euclideanCluster(
-//       foregroundCloud, 2.5, 3, 3000);
+//       foregroundCloud, 4, 3, 5000);
 
-    //DBSCSN Clustering
+    //DBSCAN Clustering
     std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->DBSCANCluster(
-            foregroundCloud, 5, 2.5, 5, 3000);
+            foregroundCloud, 3, 4, 3, 5000);
 
     if (cloudClusters.empty()){
         return;
@@ -162,10 +172,11 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
         }
         //render box;
         BoxQ box = pointProcessor->minBoxQ(cluster);
+//        BoxQ box = pointProcessor->boundingBoxQ(cluster);
         renderBox(viewer, box, clusterId);
         ++clusterId;
-
-        //publish object info
+//
+//        //publish object info
         waytous_perception_msgs::Object object_info;
         generateObjectInfo(object_info, clusterId, cluster, box);
         lidar_detection_info.foreground_objects.push_back(object_info);

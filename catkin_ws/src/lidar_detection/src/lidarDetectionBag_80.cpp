@@ -117,13 +117,13 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
 
     //remove background in inputCloud
     pcl::PointCloud<pcl::PointXYZI>::Ptr foregroundCloud(new pcl::PointCloud<pcl::PointXYZI>);
-    foregroundCloud = pointProcessor->bkgRemove(filteredInputCloud, filteredBgCloud, 0.9, 1);
+    foregroundCloud = pointProcessor->bkgRemove(filteredInputCloud, filteredBgCloud, 0.8, 1);
     //remove outlier
-    foregroundCloud = pointProcessor->radiusFilter(foregroundCloud, 1.0, 10);
+//    foregroundCloud = pointProcessor->radiusFilter(foregroundCloud, 1.0, 10);
     // renderPointCloud(viewer, foregroundCloud, "foregroundCloud",Color(1,0,0));
 
     // remove dust
-    foregroundCloud = pointProcessor->dustRemove(foregroundCloud, 25.0, 100.0);
+//    foregroundCloud = pointProcessor->dustRemove(foregroundCloud, 25.0, 100.0);
 
     if (foregroundCloud->points.empty()){
         return;
@@ -135,7 +135,7 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
 
     //DBSCSN Clustering
     std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->DBSCANCluster(
-            foregroundCloud, 5, 2.5, 10, 8000);
+            foregroundCloud, 5, 4, 5, 8000);
 
     if (cloudClusters.empty()){
         return;

@@ -12,7 +12,13 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/segmentation/extract_clusters.h>
+#include <pcl/ModelCoefficients.h>
+#include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/features/moment_of_inertia_estimation.h>
+
+#include <pcl/filters/morphological_filter.h>
+#include <pcl/segmentation/progressive_morphological_filter.h>
+
 
 #include "../DBSCAN/DBSCAN_kdtree.h"
 #include "../render/box.h"
@@ -51,6 +57,15 @@ public:
     typename pcl::PointCloud<PointT>::Ptr dustRemove(
             const typename pcl::PointCloud<PointT>::Ptr& inputCloud,
             float distanceThreshold, float intensityThreshold);
+
+    typename pcl::PointCloud<PointT>::Ptr RANSAC(
+            const typename pcl::PointCloud<PointT>::Ptr& inputCloud,
+            int maxInter = 10000, float distanceThreshold = 0.5);
+
+    typename pcl::PointCloud<PointT>::Ptr PMorphologicalFilter(
+            const typename pcl::PointCloud<PointT>::Ptr& inputCloud,
+            float max_window_size = 0.5, float slope = 0.7, float max_distance = 1.5,
+            float initial_distance = 0.1, float cell_size = 0.5, float base = 2.0, bool exponential = true);
 
     std::vector<typename pcl::PointCloud<PointT>::Ptr> DBSCANCluster(
             typename pcl::PointCloud<PointT>::Ptr cloud,

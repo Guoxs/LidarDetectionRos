@@ -33,6 +33,12 @@ void FromObjectMsg(const waytous_perception_msgs::ObjectArrayConstPtr& object_in
         temp_object->length=fore_object.dimensions.x;
         temp_object->width=fore_object.dimensions.y;
         temp_object->height=fore_object.dimensions.z;
+
+        //remove very small boxes
+        double area = temp_object->length * temp_object->width * temp_object->height;
+        if (area < 1.0)
+            continue;
+
         ConvertPolygon2Cloud(fore_object.convex_hull,temp_object->polygon);
         tracked_objects.push_back(temp_object);
     }

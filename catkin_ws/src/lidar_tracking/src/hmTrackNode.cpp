@@ -31,7 +31,6 @@ void callback(const waytous_perception_msgs::ObjectArrayConstPtr& object_in,
     // clock_t startTime, endTime;
     // startTime = std::clock();
     // ROS_INFO_STREAM("*************node hm_track callback successed!!!**************");
-    waytous_perception_msgs::ObjectArray observation;
     double timestamp = object_in->header.stamp.toSec();
     vector<shared_ptr<Object>> tracked_objects;
     vector<shared_ptr<Object>> objects_tracked;

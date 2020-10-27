@@ -74,7 +74,7 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::radiusFilter(
     sor.setInputCloud(cloud);
     sor.setRadiusSearch(radius);
     sor.setMinNeighborsInRadius(min_pts);
-    sor.setNegative(true);
+    sor.setNegative(false);
     sor.filter(*cloud_filter);
     return cloud_filter;
 }
@@ -149,89 +149,33 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::RANSAC(
 template<typename PointT>
 typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::PMorphologicalFilter(
         const typename pcl::PointCloud<PointT>::Ptr& inputCloud,
-        float max_window_size, float slope, float max_distance,
-        float initial_distance, float cell_size, float base, bool exponential)
+        float max_window_size, float slope, float max_distance, float initial_distance)
 {
-    // Compute the series of window sizes and height thresholds
-    std::vector<float> height_thresholds;
-    std::vector<float> window_sizes;
-    std::vector<int> ground_indices;
-    int iteration = 0;
-    float window_size = 0.0f;
-    float height_threshold = 0.0f;
+    typename pcl::PointCloud<PointT>::Ptr foreground(new pcl::PointCloud<PointT>);
+    pcl::PointIndicesPtr ground (new pcl::PointIndices);
 
     auto startTime = std::chrono::steady_clock::now();
 
-    while (window_size < max_window_size)
-    {
-        // Determine the initial window size.
-        if (exponential)
-            window_size = cell_size * (2.0f * std::pow (base, iteration) + 1.0f);
-        else
-            window_size = cell_size * (2.0f * (iteration+1) * base + 1.0f);
-        std::cout << "window_size  " << window_size  << std::endl;
-        // Calculate the height threshold to be used in the next iteration.
-        if (iteration == 0)
-            height_threshold = initial_distance;
-        else
-            height_threshold = slope * (window_size - window_sizes[iteration-1]) * cell_size + initial_distance;
-        std::cout << "height_threshold  " << height_threshold  << std::endl;
+    pcl::ProgressiveMorphologicalFilter<PointT> pmf;
+    pmf.setInputCloud (inputCloud);
+    pmf.setMaxWindowSize (max_window_size);
+    pmf.setSlope (slope);
+    pmf.setInitialDistance (initial_distance);
+    pmf.setMaxDistance (max_distance);
+    pmf.extract (ground->indices);
 
-        // Enforce max distance on height threshold
-        if (height_threshold > max_distance)
-            height_threshold = max_distance;
-
-        window_sizes.push_back (window_size);
-        height_thresholds.push_back (height_threshold);
-
-        iteration++;
-    }
-    // Ground indices are initially limited to those points in the input cloud we
-    // wish to process
-    for (int i=0;i< inputCloud->points.size();i++){
-        ground_indices.push_back(i);
-    }
-
-    // Progressively filter ground returns using morphological open
-    for (size_t i = 0; i < window_sizes.size (); ++i)
-    {
-        std::cout<< "Iteration " << i << "height threshold = " << height_thresholds[i] << " window size = " <<
-            window_sizes[i] << std::endl;
-
-        // Limit filtering to those points currently considered ground returns
-        typename pcl::PointCloud<PointT>::Ptr cloud (new pcl::PointCloud<PointT>);
-        pcl::copyPointCloud<PointT> (*inputCloud, ground_indices, *cloud);
-
-        // Create new cloud to hold the filtered results. Apply the morphological
-        // opening operation at the current window size.
-        typename pcl::PointCloud<PointT>::Ptr cloud_f (new pcl::PointCloud<PointT>);
-        pcl::applyMorphologicalOperator<PointT> (cloud, window_sizes[i], pcl::MORPH_OPEN, *cloud_f);
-
-        // Find indices of the points whose difference between the source and
-        // filtered point clouds is less than the current height threshold.
-        std::vector<int> pt_indices;
-        //cout << "ground.size() = " << ground.size() << endl;
-        for (size_t p_idx = 0; p_idx < ground_indices.size (); ++p_idx)
-        {
-            float diff = cloud->points[p_idx].z - cloud_f->points[p_idx].z;
-            //cout << "diff " << diff << endl;
-            if (diff < height_thresholds[i])
-                pt_indices.push_back (ground_indices[p_idx]);
-        }
-
-        // Ground is now limited to pt_indices
-        ground_indices.swap (pt_indices);
-        std::cout << "ground now has " << ground_indices.size () << " points" << std::endl;
-    }
-    typename pcl::PointCloud<PointT>::Ptr cloud_out (new pcl::PointCloud<PointT>);
-    // Extract cloud_in with ground indices
-    pcl::copyPointCloud<PointT> (*inputCloud, ground_indices, *cloud_out);
+    // Create the filtering object
+    pcl::ExtractIndices<PointT> extract;
+    extract.setInputCloud (inputCloud);
+    extract.setIndices (ground);
+    extract.setNegative (true);
+    extract.filter (*foreground);
 
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    std::cout << "progressive morphological filter took " << elapsedTime.count() << " milliseconds" << std::endl;
+    std::cout << "PMorphologicalFilter took " << elapsedTime.count() << " milliseconds" << std::endl;
 
-    return cloud_out;
+    return foreground;
 }
 
 

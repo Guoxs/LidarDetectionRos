@@ -1,27 +1,28 @@
 <launch>
   <node pkg="lidar_detection" name="lidarDetectionBagRviz" type="lidarDetectionBagRviz" output="screen"
-        args="20201015/32/01.bag"/>
+        args="20201015/32/ 03"/>
 
   <node pkg="lidar_tracking" name="hmTrackNode" type="hmTrackNode" output="screen"/>
-    <param name="track_cached_history_size_maximum" type="int" value="5"/>
-    <param name="track_visible_ratio_minimum" type="double" value="0.5"/>
-    <param name="collect_age_minimum" type="int" value="5"/>
-    <param name="collect_consecutive_invisible_maximum" type="int" value="3"/>
-    <param name="acceleration_noise_maximum" type="double" value="0.3"/>
-    <param name="speed_noise_maximum" type="double" value="0.3"/>
-    <param name="match_distance_maximum" type="double" value="1.5"/>
-    <param name="location_distance_weight" type="double" value="5.0"/>
-    <param name="direction_distance_weight" type="double" value="3.0"/>
-    <param name="bbox_size_distance_weight" type="double" value="1.0"/>
-    <param name="point_num_distance_weight" type="double" value="1.0"/>
-    <param name="histogram_distance_weight" type="double" value="1.0"/>
-    <param name="histogram_bin_size" type="int" value="32"/>
-    <param name="use_adaptive" type="bool" value="true"/>
-    <param name="measurement_noise" type="double" value="0.2"/>
-    <param name="initial_velocity_noise" type="double" value="0.2"/>
-    <param name="xy_propagation_noise" type="double" value="0.2"/>
-    <param name="z_propagation_noise" type="double" value="0.2"/>
-    <param name="breakdown_threshold_maximum" type="double" value="0.4"/>
+    <param name="track_cached_history_size_maximum" value="10" />
+    <param name="track_consecutive_invisible_maximum" value="20" />
+    <param name="track_visible_ratio_minimum" value="0.3" />
+    <param name="collect_age_minimum" value="2" />
+    <param name="collect_consecutive_invisible_maximum" value="10" />
+    <param name="acceleration_noise_maximum" value="5" />
+    <param name="speed_noise_maximum" value="0.4" />
+    <param name="match_distance_maximum" value="6.0" />
+    <param name="location_distance_weight" value="0.6" />
+    <param name="direction_distance_weight" value="0.1" />
+    <param name="bbox_size_distance_weight" value="0.1" />
+    <param name="point_num_distance_weight" value="0.1" />
+    <param name="histogram_distance_weight" value="0" />
+    <param name="histogram_bin_size" value="10" />
+    <param name="use_adaptive" type="bool" value="true" />
+    <param name="measurement_noise" value="0.2" />
+    <param name="initial_velocity_noise" value="5.0" />
+    <param name="xy_propagation_noise" value="10.0" />
+    <param name="z_propagation_noise" value="5.0" />
+    <param name="breakdown_threshold_maximum" value="10.0" />
 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find lidar_tracking)/config.rviz"/>
 </launch>

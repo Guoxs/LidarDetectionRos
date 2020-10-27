@@ -15,6 +15,8 @@
 #include "processing/processPointClouds.h"
 #include "processing/processPointClouds.cpp"
 
+Eigen::Vector4f minPoint(-10, -80, -5, 1);
+Eigen::Vector4f maxPoint( 150, 100, 10, 1);
 
 void lidarDetection(ProcessPointClouds<pcl::PointXYZI>* PointProcessor,
                     const pcl::PointCloud<pcl::PointXYZI>::Ptr& inputCloud,
@@ -60,6 +62,7 @@ int main (int argc, char** argv)
     std::cout << "Loading background file..." << std::endl;
     pcl::PointCloud<pcl::PointXYZI>::Ptr bgCloud(new pcl::PointCloud<pcl::PointXYZI>);
     bgCloud = cloudIO->loadPcd(rootPath + bagRoot + "background.pcd");
+    bgCloud = pointProcessor->BoxFilter(bgCloud, minPoint, maxPoint);
 
     //show video results
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud(new pcl::PointCloud<pcl::PointXYZI>);
@@ -105,14 +108,16 @@ void lidarDetection(ProcessPointClouds<pcl::PointXYZI>* pointProcessor,
                     waytous_perception_msgs::ObjectArray& lidar_detection_info)
 {
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredInputCloud(new pcl::PointCloud<pcl::PointXYZI>);
+
+    filteredInputCloud = pointProcessor->BoxFilter(inputCloud, minPoint, maxPoint);
     //voxel filter
-    filteredInputCloud = pointProcessor->voxelFilter(inputCloud, 0.3);
+    filteredInputCloud = pointProcessor->voxelFilter(filteredInputCloud, 0.3);
 
     //remove background in inputCloud
     pcl::PointCloud<pcl::PointXYZI>::Ptr foregroundCloud(new pcl::PointCloud<pcl::PointXYZI>);
     foregroundCloud = pointProcessor->bkgRemove(filteredInputCloud, filteredBgCloud, 0.9, 1);
     //remove outlier
-    // foregroundCloud = radiusFilter(foregroundCloud, 0.8, 5);
+     foregroundCloud = pointProcessor->radiusFilter(foregroundCloud, 2.5, 5);
 
     // remove dust
     foregroundCloud = pointProcessor->dustRemove(foregroundCloud, 25.0, 100.0);
@@ -127,7 +132,7 @@ void lidarDetection(ProcessPointClouds<pcl::PointXYZI>* pointProcessor,
 
     //DBSCSN Clustering
     std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudClusters = pointProcessor->DBSCANCluster(
-            foregroundCloud, 2, 2.5, 3, 3000);
+            foregroundCloud, 3, 3.5, 5, 2000);
 
     if (cloudClusters.empty()){
         return;

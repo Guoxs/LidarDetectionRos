@@ -64,8 +64,8 @@ public:
 
     typename pcl::PointCloud<PointT>::Ptr PMorphologicalFilter(
             const typename pcl::PointCloud<PointT>::Ptr& inputCloud,
-            float max_window_size = 0.5, float slope = 0.7, float max_distance = 1.5,
-            float initial_distance = 0.1, float cell_size = 0.5, float base = 2.0, bool exponential = true);
+            float max_window_size = 10, float slope = 1.0, float max_distance = 5.0,
+            float initial_distance = 1.0);
 
     std::vector<typename pcl::PointCloud<PointT>::Ptr> DBSCANCluster(
             typename pcl::PointCloud<PointT>::Ptr cloud,

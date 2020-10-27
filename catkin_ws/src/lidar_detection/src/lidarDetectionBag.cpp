@@ -114,12 +114,12 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
                     waytous_perception_msgs::ObjectArray& lidar_detection_info)
 {
     pcl::PointCloud<pcl::PointXYZI>::Ptr filteredInputCloud(new pcl::PointCloud<pcl::PointXYZI>);
-//    filteredInputCloud = pointProcessor->BoxFilter(inputCloud, minPoint, maxPoint);
+    filteredInputCloud = pointProcessor->BoxFilter(inputCloud, minPoint, maxPoint);
     //voxel filter
-    filteredInputCloud = pointProcessor->voxelFilter(inputCloud, 0.3);
+    filteredInputCloud = pointProcessor->voxelFilter(filteredInputCloud, 0.3);
 
     // renderPointCloud(viewer, filteredBgCloud,"filterBgCloud",Color(1,1,1));
-//    renderPointCloud(viewer, filteredInputCloud,"filteredInputCloud",Color(1,1,1));
+    renderPointCloud(viewer, filteredInputCloud,"filteredInputCloud",Color(0,1,1));
 
     //remove background in inputCloud
     pcl::PointCloud<pcl::PointXYZI>::Ptr foregroundCloud(new pcl::PointCloud<pcl::PointXYZI>);
@@ -129,7 +129,7 @@ void lidarDetection(pcl::visualization::PCLVisualizer::Ptr& viewer,
 //    foregroundCloud = pointProcessor->PMorphologicalFilter(filteredInputCloud);
 
     //remove outlier
-//     foregroundCloud = pointProcessor->radiusFilter(foregroundCloud, 2.5, 3);
+     foregroundCloud = pointProcessor->radiusFilter(foregroundCloud, 2.5, 3);
 //    renderPointCloud(viewer, foregroundCloud, "foregroundCloud",Color(1,0,0));
 
     // remove dust
